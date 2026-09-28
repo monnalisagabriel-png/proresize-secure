@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "proresize-secure",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-28",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "proresize",
+      "database_id": "7ad3babf-0569-42d8-8b4d-fea4f525d5e9"
+    }
+  ]
+}
