@@ -161,6 +161,8 @@ export default {
     const a=await requireAdmin(req,env); if(!a) return json({error:"Non autorizzato"},403);
     const {email,password,months,expires_at}=await req.json(), e=String(email||"").toLowerCase();
     if(!e||!password||password.length<8) return json({error:"Email e password (minimo 8 caratteri) richieste"},400);
+    const existing=await env.DB.prepare("SELECT role FROM pr_users WHERE email=?").bind(e).first();
+    if(existing?.role==="admin") return json({error:"Questa email appartiene all'amministratore e non può essere usata come cliente"},400);
     let exp=expires_at||null;
     if(!exp){
       const m=[1,6,12].includes(Number(months))?Number(months):1;
