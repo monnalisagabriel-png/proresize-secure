@@ -144,7 +144,7 @@ export default {
     if(!u || u.role==="admin") return json({error:"Utente non valido"},404);
     const salt=crypto.randomUUID(),it=100000,hash=await pbkdf2(String(password),salt,it);
     await env.DB.prepare("UPDATE pr_users SET password_hash=?,device_hash=NULL WHERE email=? AND role!='admin'")
-      .bind(`pbkdf2${it}${salt}${hash}`,e).run();
+      .bind("pbkdf2$"+it+"$"+salt+"$"+hash,e).run();
     await env.DB.prepare("DELETE FROM pr_sessions WHERE email=?").bind(e).run();
     await env.DB.prepare("DELETE FROM pr_password_reset_requests WHERE email=?").bind(e).run();
     await audit(env,a.email,"password_reset_resolved",e);
@@ -172,7 +172,7 @@ export default {
     await env.DB.prepare(`INSERT INTO pr_users(email,password_hash,role,license_expires_at,suspended,created_at)
       VALUES(?,?, 'user',?,0,datetime('now'))
       ON CONFLICT(email) DO UPDATE SET password_hash=excluded.password_hash,license_expires_at=excluded.license_expires_at,suspended=0`)
-      .bind(e,`pbkdf2${it}${salt}${hash}`,exp).run();
+      .bind(e,"pbkdf2$"+it+"$"+salt+"$"+hash,exp).run();
     const saved=await env.DB.prepare("SELECT password_hash FROM pr_users WHERE email=?").bind(e).first();
     if(!saved || !(await verifyPassword(String(password),saved.password_hash))) return json({error:"Errore durante il salvataggio della password. Riprova."},500);
     await audit(env,a.email,"user_upsert",e+" -> "+exp);
