@@ -12,7 +12,7 @@ function parseCookies(req){
 }
 function hex(buf){return [...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 async function sha256(s){return hex(await crypto.subtle.digest("SHA-256",enc.encode(s)))}
-async function pbkdf2(password,salt,iterations=150000){
+async function pbkdf2(password,salt,iterations=100000){
   const key=await crypto.subtle.importKey("raw",enc.encode(password),"PBKDF2",false,["deriveBits"]);
   return hex(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:enc.encode(salt),iterations},key,256));
 }
@@ -62,7 +62,7 @@ export default {
     if(Number(count?.n||0)!==0) return json({error:"Configurazione già completata"},403);
     const {email,password}=await req.json();
     if(!email||!password||password.length<10) return json({error:"Usa email valida e password di almeno 10 caratteri"},400);
-    const salt=crypto.randomUUID(), it=150000, hash=await pbkdf2(password,salt,it);
+    const salt=crypto.randomUUID(), it=100000, hash=await pbkdf2(password,salt,it);
     await env.DB.prepare(`INSERT INTO pr_users(email,password_hash,role,suspended,created_at)
       VALUES(?,?, 'admin',0,datetime('now'))`).bind(email.toLowerCase(),`pbkdf2$${it}$${salt}$${hash}`).run();
     await audit(env,email,"admin_setup");
@@ -118,7 +118,7 @@ export default {
       const m=[1,6,12].includes(Number(months))?Number(months):1;
       const d=new Date(); d.setMonth(d.getMonth()+m); exp=d.toISOString();
     }
-    const salt=crypto.randomUUID(),it=150000,hash=await pbkdf2(password,salt,it);
+    const salt=crypto.randomUUID(),it=100000,hash=await pbkdf2(password,salt,it);
     await env.DB.prepare(`INSERT INTO pr_users(email,password_hash,role,license_expires_at,suspended,created_at)
       VALUES(?,?, 'user',?,0,datetime('now'))
       ON CONFLICT(email) DO UPDATE SET password_hash=excluded.password_hash,license_expires_at=excluded.license_expires_at,suspended=0`)
